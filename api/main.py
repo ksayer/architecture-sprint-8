@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-KEYCLOAK_URL = "http://localhost:8080"
+KEYCLOAK_URL = "http://keycloak:8080"
 KEYCLOAK_REALM = "reports-realm"
 KEYCLOAK_CLIENT_ID = "reports-api"
 KEYCLOAK_CLIENT_SECRET = "oNwoLQdvJAvRcL89SydqCWCe5ry1jMgq"
@@ -35,9 +35,6 @@ def get_keycloak_public_key():
     except Exception as e:
         print(f"Error fetching public key: {e}")
         return None
-
-
-public_key = get_keycloak_public_key()
 
 
 class ReportData(BaseModel):
@@ -75,12 +72,11 @@ async def verify_token(authorization: str = Header(None)):
     try:
         payload = jwt.decode(
             token,
-            public_key,
+            get_keycloak_public_key(),
             algorithms=["RS256"],
             audience="account",
             options={"verify_signature": True}
         )
-
         roles = payload.get("realm_access", {}).get("roles", [])
         if "prothetic_user" not in roles:
             raise HTTPException(
